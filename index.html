@@ -56,36 +56,31 @@
 
     <script>
         const urlParams = new URLSearchParams(window.location.search);
-        const sessionId = urlParams.get('session');
-        const galleryContainer = document.getElementById('gallery');
-        const loadingText = document.getElementById('loading');
+const sessionId = urlParams.get('session');
+const galleryContainer = document.getElementById('gallery');
+const loadingText = document.getElementById('loading');
 
-        if (!sessionId) {
-            loadingText.innerText = "Keine Fotositzung gefunden!";
-        } else {
-            // Die Basis-URL zu diesem Supabase-Ordner ermitteln
-            const currentUrl = window.location.href.split('?')[0];
-            const baseUrl = currentUrl.substring(0, currentUrl.lastIndexOf('/'));
-            
-            loadingText.style.display = 'none';
+// WICHTIG: Deine feste Supabase-Adresse
+const supabaseBaseUrl = "https://qiozvobhqhopjzanvjgk.supabase.co/storage/v1/object/public/photos";
 
-            // Wir prüfen Bilder von 0.jpg bis 9.jpg
-            for (let i = 0; i < 10; i++) {
-                const imgUrl = `${baseUrl}/sessions/${sessionId}/${i}.jpg`;
-                
-                const img = new Image();
-                img.src = imgUrl;
-                img.onload = function() {
-                    const card = document.createElement('div');
-                    card.className = 'photo-card';
-                    card.innerHTML = `
-                        <img src="${imgUrl}" alt="Fotobox Bild ${i + 1}">
-                        <a class="download-btn" href="${imgUrl}" download="Fotobox_${i + 1}.jpg" target="_blank">⬇️ Bild herunterladen</a>
-                    `;
-                    galleryContainer.appendChild(card);
-                };
-            }
-        }
-    </script>
-</body>
-</html>
+if (!sessionId) {
+    loadingText.innerText = "Keine Fotositzung gefunden!";
+} else {
+    loadingText.style.display = 'none';
+
+    for (let i = 0; i < 10; i++) {
+        const imgUrl = `${supabaseBaseUrl}/sessions/${sessionId}/${i}.jpg`;
+        
+        const img = new Image();
+        img.src = imgUrl;
+        img.onload = function() {
+            const card = document.createElement('div');
+            card.className = 'photo-card';
+            card.innerHTML = `
+                <img src="${imgUrl}" alt="Fotobox Bild ${i + 1}">
+                <a class="download-btn" href="${imgUrl}" download="Fotobox_${i + 1}.jpg" target="_blank">⬇️ Bild herunterladen</a>
+            `;
+            galleryContainer.appendChild(card);
+        };
+    }
+}</html>
