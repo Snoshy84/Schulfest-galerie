@@ -55,7 +55,7 @@
     <div id="gallery" class="gallery-grid"></div>
 
     <script>
-        const urlParams = new URLSearchParams(window.location.search);
+      const urlParams = new URLSearchParams(window.location.search);
 const sessionId = urlParams.get('session');
 const galleryContainer = document.getElementById('gallery');
 const loadingText = document.getElementById('loading');
@@ -83,4 +83,4 @@ if (!sessionId) {
             galleryContainer.appendChild(card);
         };
     }
-}</html>
+}
