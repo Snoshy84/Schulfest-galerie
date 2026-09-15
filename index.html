@@ -6,81 +6,60 @@
     <title>Schulfest Fotobox 📸</title>
     <style>
         * { box-sizing: border-box; }
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            background-color: #0f172a;
-            color: #f8fafc;
-            text-align: center;
-            padding: 24px 16px;
-            margin: 0;
-        }
-        h1 { font-size: 26px; margin-bottom: 6px; font-weight: 800; }
-        p.subtitle { font-size: 15px; color: #94a3b8; margin-top: 0; margin-bottom: 24px; }
-        .gallery-grid {
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-            max-width: 600px;
-            margin: 0 auto;
-        }
-        .photo-card {
-            background-color: #1e293b;
-            border-radius: 16px;
-            overflow: hidden;
-            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.4);
-        }
-        .photo-card img {
-            width: 100%;
-            height: auto;
-            display: block;
-        }
-        .photo-card a.download-btn {
-            display: block;
-            background-color: #3b82f6;
-            color: white;
-            text-decoration: none;
-            padding: 12px;
-            font-weight: 600;
-            font-size: 15px;
-        }
-        .loading { font-size: 18px; color: #cbd5e1; margin-top: 40px; }
+        body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; background-color: #0f172a; color: white; text-align: center; padding: 20px 16px; margin: 0; }
+        h1 { font-size: 24px; margin-bottom: 20px; }
+        .gallery-grid { display: flex; flex-direction: column; gap: 20px; max-width: 600px; margin: 0 auto; }
+        .photo-card { background-color: #1e293b; border-radius: 12px; overflow: hidden; }
+        .photo-card img { width: 100%; display: block; }
+        .download-btn { display: block; background-color: #3b82f6; color: white; text-decoration: none; padding: 14px; font-weight: bold; font-size: 16px; }
     </style>
 </head>
 <body>
 
-    <h1>Eure Fotos sind da! 🎉</h1>
-    <p class="subtitle">Tippe auf "Bild herunterladen" oder halte das Foto gedrückt.</p>
-
-    <div id="loading" class="loading">Lade Fotos...</div>
+    <h1 id="status-text">Suche eure Fotos... ⏳</h1>
     <div id="gallery" class="gallery-grid"></div>
 
     <script>
-      const urlParams = new URLSearchParams(window.location.search);
-const sessionId = urlParams.get('session');
-const galleryContainer = document.getElementById('gallery');
-const loadingText = document.getElementById('loading');
+        const urlParams = new URLSearchParams(window.location.search);
+        const sessionId = urlParams.get('session');
+        const galleryContainer = document.getElementById('gallery');
+        const statusText = document.getElementById('status-text');
 
-// WICHTIG: Deine feste Supabase-Adresse
-const supabaseBaseUrl = "https://qiozvobhqhopjzanvjgk.supabase.co/storage/v1/object/public/photos";
+        // Deine exakte Supabase-Adresse
+        const supabaseBaseUrl = "https://qiozvobhqhopjzanvjgk.supabase.co/storage/v1/object/public/photos";
 
-if (!sessionId) {
-    loadingText.innerText = "Keine Fotositzung gefunden!";
-} else {
-    loadingText.style.display = 'none';
+        if (!sessionId) {
+            statusText.innerText = "❌ Keine Fotositzung im Link gefunden!";
+        } else {
+            let imagesFound = 0;
+            
+            for (let i = 0; i < 10; i++) {
+                const imgUrl = `${supabaseBaseUrl}/sessions/${sessionId}/${i}.jpg`;
+                const img = new Image();
+                
+                img.onload = function() {
+                    imagesFound++;
+                    statusText.style.display = 'none'; // Versteckt den Lade-Text
+                    
+                    const card = document.createElement('div');
+                    card.className = 'photo-card';
+                    card.innerHTML = `
+                        <img src="${imgUrl}" alt="Fotobox Bild ${i + 1}">
+                        <a class="download-btn" href="${imgUrl}" download target="_blank">⬇️ Bild herunterladen</a>
+                    `;
+                    galleryContainer.appendChild(card);
+                };
+                
+                img.src = imgUrl; // Startet den Ladevorgang
+            }
 
-    for (let i = 0; i < 10; i++) {
-        const imgUrl = `${supabaseBaseUrl}/sessions/${sessionId}/${i}.jpg`;
-        
-        const img = new Image();
-        img.src = imgUrl;
-        img.onload = function() {
-            const card = document.createElement('div');
-            card.className = 'photo-card';
-            card.innerHTML = `
-                <img src="${imgUrl}" alt="Fotobox Bild ${i + 1}">
-                <a class="download-btn" href="${imgUrl}" download="Fotobox_${i + 1}.jpg" target="_blank">⬇️ Bild herunterladen</a>
-            `;
-            galleryContainer.appendChild(card);
-        };
-    }
-}
+            // Wenn nach 4 Sekunden gar kein Bild da ist, abbrechen:
+            setTimeout(() => {
+                if (imagesFound === 0) {
+                    statusText.innerText = "❌ Keine Bilder gefunden. Lade die Seite bitte neu.";
+                }
+            }, 4000);
+        }
+    </script>
+</body>
+</html>
