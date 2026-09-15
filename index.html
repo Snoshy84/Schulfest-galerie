@@ -12,6 +12,12 @@
         .photo-card { background-color: #1e293b; border-radius: 12px; overflow: hidden; }
         .photo-card img { width: 100%; display: block; }
         .download-btn { display: block; background-color: #3b82f6; color: white; text-decoration: none; padding: 14px; font-weight: bold; font-size: 16px; }
+        
+        /* Neues Design für den Lösch-Bereich */
+        .delete-section { margin-top: 40px; padding-top: 30px; border-top: 1px solid #334155; display: none; }
+        .delete-btn { background-color: #ef4444; color: white; border: none; padding: 14px 20px; border-radius: 12px; font-weight: bold; font-size: 16px; width: 100%; max-width: 600px; cursor: pointer; margin: 0 auto; display: block; }
+        .delete-btn:disabled { background-color: #7f1d1d; color: #9ca3af; }
+        .success-msg { color: #4ade80; font-size: 20px; font-weight: bold; }
     </style>
 </head>
 <body>
@@ -19,14 +25,26 @@
     <h1 id="status-text">Suche eure Fotos... ⏳</h1>
     <div id="gallery" class="gallery-grid"></div>
 
+    <!-- Neuer Bereich für den Lösch-Button -->
+    <div id="delete-section" class="delete-section">
+        <p style="color: #94a3b8; font-size: 14px; margin-bottom: 12px;">Alle Bilder gesichert?</p>
+        <button id="delete-btn" class="delete-btn" onclick="deletePhotos()">🗑️ Fotos jetzt endgültig löschen</button>
+    </div>
+
     <script>
+        // ------------------------------------------------------------------
+        // HIER DEINEN ANON KEY EINTRAGEN (denselben wie in Xcode):
+        const supabaseAnonKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFpb3p2b2JocWhvcGp6YW52amdrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODkxNTA0ODYsImV4cCI6MjEwNDcyNjQ4Nn0.6KlubkRGbfwJrl06zUsXb9OR-V1YYfDxiH-tUsiilF8";
+        // ------------------------------------------------------------------
+
         const urlParams = new URLSearchParams(window.location.search);
         const sessionId = urlParams.get('session');
         const galleryContainer = document.getElementById('gallery');
         const statusText = document.getElementById('status-text');
+        const deleteSection = document.getElementById('delete-section');
 
-        // Deine exakte Supabase-Adresse
         const supabaseBaseUrl = "https://qiozvobhqhopjzanvjgk.supabase.co/storage/v1/object/public/photos";
+        const supabaseApiUrl = "https://qiozvobhqhopjzanvjgk.supabase.co/storage/v1/object/photos";
 
         if (!sessionId) {
             statusText.innerText = "❌ Keine Fotositzung im Link gefunden!";
@@ -39,7 +57,7 @@
                 
                 img.onload = function() {
                     imagesFound++;
-                    statusText.style.display = 'none'; // Versteckt den Lade-Text
+                    statusText.style.display = 'none';
                     
                     const card = document.createElement('div');
                     card.className = 'photo-card';
@@ -48,17 +66,48 @@
                         <a class="download-btn" href="${imgUrl}" download target="_blank">⬇️ Bild herunterladen</a>
                     `;
                     galleryContainer.appendChild(card);
+
+                    // Lösch-Button einblenden, sobald mindestens 1 Bild da ist
+                    deleteSection.style.display = 'block';
                 };
                 
-                img.src = imgUrl; // Startet den Ladevorgang
+                img.src = imgUrl;
             }
 
-            // Wenn nach 4 Sekunden gar kein Bild da ist, abbrechen:
             setTimeout(() => {
                 if (imagesFound === 0) {
-                    statusText.innerText = "❌ Keine Bilder gefunden. Lade die Seite bitte neu.";
+                    statusText.innerText = "❌ Keine Bilder gefunden. Wurden sie vielleicht schon gelöscht?";
                 }
             }, 4000);
+        }
+
+        // --- NEUE FUNKTION: BILDER LÖSCHEN ---
+        async function deletePhotos() {
+            if (!confirm("Bist du sicher? Die Fotos werden sofort und für immer vom Server gelöscht!")) return;
+            
+            const btn = document.getElementById('delete-btn');
+            btn.innerText = "Lösche Daten... ⏳";
+            btn.disabled = true;
+
+            // Wir schicken für jedes mögliche Bild einen Löschbefehl
+            for (let i = 0; i < 10; i++) {
+                const deleteUrl = `${supabaseApiUrl}/sessions/${sessionId}/${i}.jpg`;
+                
+                await fetch(deleteUrl, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${supabaseAnonKey}`,
+                        'apikey': supabaseAnonKey
+                    }
+                });
+            }
+            
+            // UI aufräumen und Erfolgsmeldung zeigen
+            galleryContainer.innerHTML = "";
+            deleteSection.innerHTML = `
+                <div class="success-msg">✅ Fotos erfolgreich gelöscht!</div>
+                <p style="color: #94a3b8; margin-top: 10px;">Ihr könnt diese Seite jetzt schließen. Viel Spaß noch auf dem Schulfest!</p>
+            `;
         }
     </script>
 </body>
